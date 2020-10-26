@@ -1,0 +1,89 @@
+#Installing required packages
+install.packages(c("raster", "randomForest", "sp", "rgdal", "factoextra", "cluster"))
+lapply(c("raster", "randomForest", "sp", "rgdal", "factoextra", "cluster"), require, character.only = TRUE)
+
+#Loading required libraries
+library(raster)
+library(randomForest)
+library(sp)
+library(rgdal)
+library(ggplot2)
+library(factoextra)
+library(cluster)
+
+# Setting-up the working directory 
+setwd("C:\\Users\\belgium\\Desktop\\Paper_Training_Samples\\GiTHub")
+
+#Define the input raster data (e.g. multi-temporal NDVI data calculated based on Sentinel-2 images)
+input_data = "NDVI.tif"
+
+#Read the input training samples
+Training_Samples<-read.csv("TrainingSamples.csv", header=TRUE, sep = ",")
+coordinates(Training_Samples)=~POINT_X+POINT_Y
+proj4string(Training_Samples)<-CRS("+proj=utm +zone=31N +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")  
+
+
+# Extract raster values for the training samples 
+raster_input = stack(input_data)
+training_data = extract(raster_input, Training_Samples)
+training_pts = as.factor(Training_Samples$ClassID) 
+
+# Traing a random forest classification model
+#Define the number of decision trees
+ntree = 1000     
+random_forest_model = randomForest(training_data, y=training_pts, ntree = ntree, keep.forest=TRUE, importance = TRUE, proximity=TRUE) 
+
+#Assess the importance of variable importance
+variable_imp<-importance(random_forest_model) 
+variable_imp
+
+
+# Classifying the entire study area
+predictor_data = raster_input	
+predictions = predict(predictor_data,random_forest_model, format="tif", overwrite="TRUE") 
+classification_results <- writeRaster(predictions , 'test_GitHub.tif', overwrite=TRUE)
+
+
+
+#Vizualize samples based on proximity values (note that there are 11 classes in the training samples)
+random_forest_model$proximity
+distance.matrix<-dist(1-random_forest_model$proximity)
+distance.matrix
+mds.studd<-cmdscale(distance.matrix, eig = TRUE, x.ret = TRUE)
+mds.studd
+mds.var.per<-round(mds.studd$eig/sum(mds.studd$eig)*100,1)
+mds.var.per
+mds.values<-data.frame(mds.studd$points)
+mds.values
+mds.values$Class<-training_pts
+mds.values$Sample<-seq(1,nrow(mds.values),by=1)
+mds.values
+pplot<-ggplot(data=mds.values,aes(x=X1,y=X2, label=Sample)) + geom_point() + geom_text(aes(color=Class))
+pplot 
+
+
+
+#Cluster proximity values using k-means unsupervised method. The number of samples can be identified using Elbow method or Silhouette method or Gap statistica method
+
+#Elbow method
+fviz_nbclust(mds.values, kmeans, method = "wss") +
+  geom_vline(xintercept = 11, linetype = 2)+
+  labs(subtitle = "Elbow method")
+
+# Silhouette method
+fviz_nbclust(mds.values, kmeans, method = "silhouette")+
+  labs(subtitle = "Silhouette method")
+
+set.seed(123)
+plot_gapst<- fviz_nbclust(mds.values, kmeans, nstart = 25, k.max=15,  method = "gap_stat", nboot = 50)+
+  labs(subtitle = "Gap statistic method")
+plot_gapst
+
+#Clustering using K-means unsupervised method
+clustering <- kmeans(mds.values, 10, nstart = 25)
+str(clustering)
+plot<-fviz_cluster(clustering, data = mds.values, geom="point", ellipse.type = "norm", xlab=FALSE, ylab=FALSE, pointsize=1, show.clust.cent=TRUE, main= 'Samples clustering based on Random Forest proximity measure')
+plot
+
+
+
