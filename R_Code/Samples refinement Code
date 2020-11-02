@@ -12,13 +12,13 @@ library(factoextra)
 library(cluster)
 
 # Setting-up the working directory 
-setwd("C:\\Users\\belgium\\Desktop\\Paper_Training_Samples\\GiTHub")
+setwd("")
 
 #Define the input raster data (e.g. multi-temporal NDVI data calculated based on Sentinel-2 images)
-input_data = "NDVI.tif"
+input_data = ""
 
 #Read the input training samples
-Training_Samples<-read.csv("TrainingSamples.csv", header=TRUE, sep = ",")
+Training_Samples<-read.csv("YourTrainingSamples.csv", header=TRUE, sep = ",")
 coordinates(Training_Samples)=~POINT_X+POINT_Y
 proj4string(Training_Samples)<-CRS("+proj=utm +zone=31N +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")  
 
