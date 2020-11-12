@@ -4,7 +4,7 @@ The methodology works well for areas with balanced crop samples. Yet, it favors 
 
 The code required for refining labeled samples using Random Forests in available in the R_code folder together with raster and samples data for testing purposes.
 
-This study has been published in the International Journal of Applied Earth Observation and Geoinformation and can be accessed from here:
+This study has been published in the International Journal of Applied Earth Observation and Geoinformation and can be accessed from here: https://www.sciencedirect.com/science/article/pii/S0303243420309077
 
-Please cite the paper as follows:
+Please cite the paper as follows: Belgiu, M., Bijker, W., Csillik, O., & Stein, A. (2021). Phenology-based sample generation for supervised crop type classification. International Journal of Applied Earth Observation and Geoinformation, 95, 102264
 
